@@ -1,0 +1,100 @@
+/* Global theme tokens (light by default, dark when html has .dark) */
+
+/* Light (default) tokens */
+:root {
+  --radius: 0.625rem;
+
+  /* Surfaces */
+  --background: #f8fafc; /* page background (light) */
+  --card: #ffffff;       /* card surface (light) */
+  --soft: #f1f5f9;       /* inputs / soft bg (light) */
+
+  /* Text */
+  --foreground: #0f172a;
+  --muted-foreground: #6b7280;
+
+  /* Primary / accents */
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  /* Borders / subtle */
+  --border-subtle: rgba(15, 23, 42, 0.06);
+
+  /* Feedback */
+  --success: #22c55e;
+  --destructive: #ef4444;
+}
+
+/* Dark tokens — used when <html> has .dark */
+html.dark {
+  --radius: 0.625rem;
+
+  /* Deep navy app background */
+  --background: #071025;   /* page background */
+  --card: #0B1632;         /* card surface */
+  --soft: #0F1A37;         /* inputs / soft bg */
+
+  /* Text */
+  --foreground: #E6EEF8;   /* main text on dark bg */
+  --muted-foreground: #9AA4C6;
+
+  /* Primary / accents */
+  --primary: #6366F1;
+  --primary-foreground: #ffffff;
+
+  /* Borders / subtle */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Feedback */
+  --success: #22C55E;
+  --destructive: #EF4444;
+}
+
+/* Utility mapping for non-Tailwind or legacy selectors */
+.bg-background { background-color: var(--background) !important; }
+.bg-card { background-color: var(--card) !important; }
+.bg-soft { background-color: var(--soft) !important; }
+.text-foreground { color: var(--foreground) !important; }
+.text-muted-foreground { color: var(--muted-foreground) !important; }
+.border-border-subtle { border-color: var(--border-subtle) !important; }
+
+/* Tailwind base first so utilities are generated reliably */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Use a base layer for global element rules that rely on the variables above */
+@layer base {
+  /* ensure the html.dark body is dark when dark class is present */
+  html.dark body,
+  html.dark #root {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* common primitives fallback (for third-party markup that uses .card) */
+  .card,
+  .Card {
+    background-color: var(--card);
+    color: var(--foreground);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+  }
+
+  /* inputs default */
+  input,
+  textarea,
+  select {
+    background-color: var(--soft);
+    color: var(--foreground);
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.5rem;
+  }
+
+  /* small helper classes (optional) */
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+}
