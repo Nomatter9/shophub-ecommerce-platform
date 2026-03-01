@@ -8,6 +8,7 @@ import { useAllCategories } from "@/hooks/useCategories";
 import { useCart } from "@/Customer/context/CartContext"; 
 import { Input } from "@/components/ui/input";
 import axiosClient from "@/axiosClient";
+import { useUser } from "../context/UserContext";
 
 export default function DepartmentMenu() {
   const navigate = useNavigate();
@@ -25,8 +26,8 @@ export default function DepartmentMenu() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const [authKey, setAuthKey] = useState(0);
-  const isLoggedIn = !!localStorage.getItem("token");
-
+const { user } = useUser();   
+const isLoggedIn = !!user;
   useEffect(() => {
     const handleAuthChange = () => setAuthKey(prev => prev + 1);
     window.addEventListener('auth-change', handleAuthChange);
@@ -117,42 +118,37 @@ export default function DepartmentMenu() {
               Sell on TakealotClone
             </Link>
           </div>
+<div className="flex items-center gap-2">
+  {isLoggedIn ? (
+    <div className="flex items-center gap-4">
+      <Link 
+        to="/orders" 
+        className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
+      >
+        My Orders
+      </Link>
 
-          <div className="flex items-center gap-2">
-            {isLoggedIn ? (
-              <div className="flex items-center gap-4">
-                <Link 
-                  to="/orders" 
-                  className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
-                >
-                  Orders
-                </Link>
-                <div className="h-3 w-[1px] bg-slate-700"></div>
-                <Link 
-                  to="/account" 
-                  className="flex items-center gap-2 text-slate-300 hover:text-white font-bold px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
-                >
-                  My Account
-                </Link>
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <Link 
-                  to="/login" 
-                  className="text-slate-300 hover:text-white px-4 py-1 font-semibold transition-colors"
-                >
-                  Login
-                </Link>
-                <div className="h-4 w-[1px] bg-slate-700 mx-1"></div>
-                <Link 
-                  to="/register" 
-                  className="text-slate-300 hover:text-white px-4 py-1 font-semibold transition-colors"
-                >
-                  Register
-                </Link>
-              </div>
-            )}
-          </div>
+      <Link 
+        to="/account" 
+        className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
+      >
+        My Account
+      </Link>
+
+      <Link 
+        to="/profile" 
+        className="text-slate-300 hover:text-white font-bold px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
+      >
+        Profile
+      </Link>
+    </div>
+  ) : (
+    <div className="flex items-center">
+      <Link to="/login" className="px-4 py-1">Login</Link>
+      <Link to="/register" className="px-4 py-1">Register</Link>
+    </div>
+  )}
+</div>
         </div>
       </div>
       <div className="border-b border-slate-800/30">

@@ -25,6 +25,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return [];
     const saved = localStorage.getItem('cart');
     return saved ? JSON.parse(saved) : [];
   });
@@ -33,66 +34,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);
 
- // Inside CartProvider in CartContext.tsx
+  const addToCart = (product: any, quantity: number = 1) => {
+    setItems(prev => {
+      const existing = prev.find(i => i.productId === product.id);
+      const stock = product.stockQuantity ?? product.stock ?? 0;
 
-const addToCart = (product: any, quantity: number = 1) => {
-  setItems(prev => {
-    const existing = prev.find(item => item.productId === product.id);
-    const currentQtyInCart = existing ? existing.quantity : 0;
-    const stockAvailable = product.stockQuantity ?? product.stock ?? 0;
+      if (existing && existing.quantity + quantity > stock) {
+        toast.error(`Cannot add more than stock (${stock})`);
+        return prev;
+      }
 
-    // Check if total would exceed stock
-    if (currentQtyInCart + quantity > stockAvailable) {
-      toast.error(`Cannot add more. Total in cart would exceed stock (${stockAvailable}).`);
-      return prev;
-    }
+      if (existing) {
+        toast.success(`Updated ${product.name} quantity`);
+        return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i);
+      }
 
-    if (existing) {
-      toast.success(`Updated ${product.name} quantity`);
-      return prev.map(item =>
-        item.productId === product.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      );
-    }
-
-    toast.success(`${product.name} added to cart`);
-    return [...prev, {
-      id: Date.now(),
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity,
-      image: product.images?.[0]?.url || '', // We flatten the image here
-      stock: stockAvailable
-    }];
-  });
-};
-
+      toast.success(`${product.name} added to cart`);
+      return [...prev, {
+        id: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        quantity,
+        image: product.images?.[0]?.url || '',
+        stock
+      }];
+    });
+  };
 
   const removeFromCart = (productId: number) => {
-    setItems(prev => prev.filter(item => item.productId !== productId));
+    setItems(prev => prev.filter(i => i.productId !== productId));
     toast.success('Removed from cart');
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-
-    setItems(prev =>
-      prev.map(item => {
-        if (item.productId === productId) {
-          if (quantity > item.stock) {
-            toast.error(`Only ${item.stock} items available`);
-            return item;
-          }
-          return { ...item, quantity };
+    if (quantity <= 0) return removeFromCart(productId);
+    setItems(prev => prev.map(i => {
+      if (i.productId === productId) {
+        if (quantity > i.stock) {
+          toast.error(`Only ${i.stock} items available`);
+          return i;
         }
-        return item;
-      })
-    );
+        return { ...i, quantity };
+      }
+      return i;
+    }));
   };
 
   const clearCart = () => {
@@ -100,19 +86,11 @@ const addToCart = (product: any, quantity: number = 1) => {
     toast.success('Cart cleared');
   };
 
-  const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{
-      items,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      total,
-      itemCount
-    }}>
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount }}>
       {children}
     </CartContext.Provider>
   );

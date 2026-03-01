@@ -66,7 +66,6 @@ export default function CartPage() {
                 return (
                   <div key={item.id} className="bg-white rounded-lg p-6 border hover:shadow-md transition-shadow">
                     <div className="flex gap-6">
-                      {/* IMAGE SECTION */}
                       <div className="relative w-32 h-32 flex-shrink-0">
                         <img
                           src={imageUrl}
@@ -76,13 +75,6 @@ export default function CartPage() {
                             (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${item.productId}/200`;
                           }}
                         />
-                        
-                        {item.quantity > 1 && (
-                          <div className="absolute -top-2 -left-2 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white z-20">
-                            {item.quantity}
-                          </div>
-                        )}
-
                         {item.images?.some((img: any) => img.isPrimary) && (
                           <div className="absolute -top-1.5 -right-1.5 bg-amber-500 rounded-full p-1 shadow-lg border-2 border-white z-10">
                             <Star className="w-3 h-3 text-white fill-white" />
@@ -176,7 +168,7 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between text-lg font-bold mb-6">
+                <div className="flex justify-between text-lg font-bold mb-6 text-gray-600">
                   <span>Total</span>
                   <span className="text-blue-600">R{total.toFixed(2)}</span>
                 </div>

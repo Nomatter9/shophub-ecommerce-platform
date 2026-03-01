@@ -195,7 +195,7 @@ const mainCategories = categories?.filter((category: any)=> category.parentId ==
   </Select>
 </td>
       <td className="px-6 py-6 text-center font-bold text-white">{category.sortOrder}</td>
-      <td className="px-6 py-6 text-center font-bold text-white">{category.subcategories.length}</td>
+      <td className="px-6 py-6 text-center font-bold text-white">{category.subcategories?.length || 0}</td>
       <td className="px-6 py-6 whitespace-nowrap">
         <div className="flex flex-col text-[11px]">
           <span className="text-slate-500">Created: <b className="text-slate-300">{category.createdAt ? format(new Date(category.createdAt), "dd MMM yy") : "N/A"}</b></span>

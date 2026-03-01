@@ -58,7 +58,6 @@ export default function SellerProductManagement() {
       toast.error(error.response?.data?.message || "Failed to save product");
     }
   };
-  // Add this new function in SellerProductManagement component
 const handleToggleStatus = async (id: number, currentStatus: boolean) => {
   try {
     const formData = new FormData();
@@ -179,9 +178,8 @@ const handleToggleStatus = async (id: number, currentStatus: boolean) => {
           </span>
         </td>
         <td className="px-6 py-4 text-center">
-          <button 
-  onClick={() => handleToggleStatus(p.id, p.isActive)}
-  title={p.isActive ? "Click to Deactivate" : "Click to Activate"}
+          <button onClick={() => handleToggleStatus(p.id, p.isActive)}
+           title={p.isActive ? "Click to Deactivate" : "Click to Activate"}
             className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all duration-200 border ${
               p.isActive 
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' 

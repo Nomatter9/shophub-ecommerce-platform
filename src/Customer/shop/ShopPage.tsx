@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useAllProducts } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
-// import { ProductCard } from '@/Customer/shop/ProductCard';
 import { CategorySelect } from '@/components/category/CategorySelect';
 import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from './ProductCard';
@@ -59,7 +58,6 @@ export default function ShopPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 {products && products.map((product:any) => (
-  // Only render the card if the product object exists
   product?.id && <ProductCard key={product.id} product={product} />
 ))}
 

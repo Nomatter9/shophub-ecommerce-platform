@@ -8,7 +8,6 @@ export default defineConfig({
     react(),
     tailwindcss(), 
   ],
-   base: '/shophub-ecommerce-platform/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
