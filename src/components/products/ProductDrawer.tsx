@@ -73,7 +73,12 @@ export default function ProductDrawer({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
-  const selectedCategoryName = categories.find(
+useEffect(() => {
+  if (!isOpen) {
+    setPreviewIndex(null);
+  }
+}, [isOpen]);
+  const selectedCategoryName = (categories ?? []).find(
     (c) => String(c.id) === String(formData.categoryId)
   )?.name || "Unassigned";
 
@@ -213,8 +218,16 @@ export default function ProductDrawer({
   const canEditRole = user.role === 'admin' && !isEditingSelf;
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent 
+<Sheet
+  open={isOpen}
+  onOpenChange={(open) => {
+    if (!open) {
+      setPreviewIndex(null);
+      onClose();
+    }
+  }}
+>    
+  <SheetContent 
         side="right" 
         className="flex flex-col h-full w-[400px] sm:w-[540px] bg-[#0B1224] border-white/10 text-white p-0 overflow-hidden"
       >
@@ -260,7 +273,7 @@ export default function ProductDrawer({
                 </div>
                 <div className="grid gap-2">
                     <Label className="text-slate-300">Category</Label>
-                    <CategorySelect categories={categories} value={formData.categoryId} onSelect={(id:any) => setFormData({ ...formData, categoryId: id })} />
+                    <CategorySelect categories={categories ?? []} value={formData.categoryId} onSelect={(id:any) => setFormData({ ...formData, categoryId: id })} />
                 </div>
               </section>
               <section className="space-y-4">
@@ -321,59 +334,63 @@ export default function ProductDrawer({
         </SheetFooter>
 
 
-        {previewIndex !== null && previews.length > 0 && (
-          <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-200"
-            onClick={() => setPreviewIndex(null)}
-          >
-            <button 
-              disabled={previewIndex === 0}
-              onClick={handlePrev}
-              className={`absolute left-4 sm:left-8 p-4 rounded-full border border-white/10 transition-all z-[110]
-                ${previewIndex === 0 
-                  ? "opacity-10 cursor-not-allowed text-slate-600" 
-                  : "bg-white/5 hover:bg-white/10 text-white"}`}
-            >
-              <ChevronLeft size={32} />
-            </button>
-            <div 
-              className="relative max-w-[85%] max-h-[85vh] flex flex-col items-center gap-6" 
-              onClick={(e) => e.stopPropagation()} 
-            >
-              <button 
-                onClick={() => setPreviewIndex(null)}
-                className="absolute -top-4 -right-4 z-[120] p-2 rounded-full bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 hover:scale-110 transition-all border-2 border-[#0B1224]"
-                title="Close Preview"
-              >
-                <X size={12} />
-              </button>
+   {isOpen && previewIndex !== null && previews.length > 0 && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-200"
+    onClick={() => setPreviewIndex(null)}
+  >
+    <button 
+      disabled={previewIndex === 0}
+      onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+      
+      className={`absolute left-4 sm:left-8 p-4 rounded-full border border-white/10 transition-all z-[110]
+        ${previewIndex === 0 
+          ? "opacity-10 cursor-not-allowed text-slate-600" 
+          : "bg-white/5 hover:bg-white/10 text-white"}`}
+    >
+      <ChevronLeft size={32} />
+    </button>
 
-              <img 
-                src={previews[previewIndex].url} 
-                alt="Full Preview" 
-                className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10" 
-              />
-              <div className="flex flex-col items-center gap-1 bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/5">
-                <p className="text-white font-medium text-lg">
-                  Image {previewIndex + 1} of {previews.length}
-                </p>
-                <p className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-mono">
-                  {previews[previewIndex].isExisting ? 'Cloud Storage' : 'Local Draft'}
-                </p>
-              </div>
-            </div>
-            <button 
-              disabled={previewIndex === previews.length - 1}
-              onClick={handleNext}
-              className={`absolute right-4 sm:right-8 p-4 rounded-full border border-white/10 transition-all z-[110]
-                ${previewIndex === previews.length - 1 
-                  ? "opacity-10 cursor-not-allowed text-slate-600" 
-                  : "bg-white/5 hover:bg-white/10 text-white"}`}
-            >
-              <ChevronRight size={32} />
-            </button>
-          </div>
-        )}
+    <div 
+      className="relative max-w-[85%] max-h-[85vh] flex flex-col items-center gap-6" 
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button 
+        onClick={() => setPreviewIndex(null)}
+        className="absolute -top-4 -right-4 z-[120] p-2 rounded-full bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 hover:scale-110 transition-all border-2 border-[#0B1224]"
+        title="Close Preview"
+      >
+        <X size={12} />
+      </button>
+
+      <img 
+        src={previews[previewIndex].url} 
+        alt="Full Preview" 
+        className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10" 
+      />
+
+      <div className="flex flex-col items-center gap-1 bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/5">
+        <p className="text-white font-medium text-lg">
+          Image {previewIndex + 1} of {previews.length}
+        </p>
+        <p className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-mono">
+          {previews[previewIndex].isExisting ? 'Cloud Storage' : 'Local Draft'}
+        </p>
+      </div>
+    </div>
+
+    <button 
+      disabled={previewIndex === previews.length - 1}
+      onClick={(e) => { e.stopPropagation(); handleNext(); }}
+      className={`absolute right-4 sm:right-8 p-4 rounded-full border border-white/10 transition-all z-[110]
+        ${previewIndex === previews.length - 1 
+          ? "opacity-10 cursor-not-allowed text-slate-600" 
+          : "bg-white/5 hover:bg-white/10 text-white"}`}
+    >
+      <ChevronRight size={32} />
+    </button>
+  </div>
+)}
       </SheetContent>
     </Sheet>
   );

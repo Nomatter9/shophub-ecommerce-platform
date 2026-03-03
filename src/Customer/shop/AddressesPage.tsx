@@ -114,7 +114,7 @@ const onSubmit = async (data: AddressFormData) => {
     } else {
       await axiosClient.post("/addresses", data);
       
-      toast.success("Address added successfully! Redirecting to checkout...");
+      toast.success("Address added successfully!");
         navigate("/checkout");
      
     }

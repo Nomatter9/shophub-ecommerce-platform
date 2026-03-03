@@ -58,11 +58,9 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
               {items.map((item: any) => {
-                const primaryImage = item.images?.find((img: any) => img.isPrimary) || item.images?.[0];
-                const imageUrl = primaryImage
-                  ? `${import.meta.env.VITE_STATIC_FILE_URL}${primaryImage.url}`
-                  : `https://picsum.photos/seed/${item.productId}/200`;
-
+               const imageUrl = item.image
+                ? `${import.meta.env.VITE_STATIC_FILE_URL}${item.image}`
+                : `https://picsum.photos/seed/${item.productId}/200`;
                 return (
                   <div key={item.id} className="bg-white rounded-lg p-6 border hover:shadow-md transition-shadow">
                     <div className="flex gap-6">
@@ -75,11 +73,6 @@ export default function CartPage() {
                             (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${item.productId}/200`;
                           }}
                         />
-                        {item.images?.some((img: any) => img.isPrimary) && (
-                          <div className="absolute -top-1.5 -right-1.5 bg-amber-500 rounded-full p-1 shadow-lg border-2 border-white z-10">
-                            <Star className="w-3 h-3 text-white fill-white" />
-                          </div>
-                        )}
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
@@ -109,24 +102,28 @@ export default function CartPage() {
                           <div className="flex flex-col gap-1">
                             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Quantity</span>
                             <div className="flex items-center gap-3">
-                              <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                             <div className=" flex items-center gap-1 bg-slate-200 rounded-xl p-1">
                                 <button
                                   onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                                   disabled={item.quantity <= 1}
-                                  className="p-2 hover:bg-gray-100 disabled:opacity-20 transition-colors"
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-900 hover:text-white hover:bg-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                                 >
-                                  <Minus className="w-4 h-4" />
+                                  <Minus className="w-3.5 h-3.5" />
                                 </button>
-                                <span className="w-12 text-center font-black text-gray-900">{item.quantity}</span>
+
+                                <span className="w-8 text-center text-sm font-bold text-slate-900">
+                                  {item.quantity}
+                                </span>
+
                                 <button
                                   onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                                   disabled={item.quantity >= item.stock}
-                                  className="p-2 hover:bg-gray-100 disabled:opacity-20 transition-colors"
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-900 hover:text-white hover:bg-slate-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                                 >
-                                  <Plus className="w-4 h-4" />
+                                  <Plus className="w-3.5 h-3.5" />
                                 </button>
                               </div>
-                              {item.stock < 10 && (
+                               {item.stock < 10 && (
                                 <span className="text-xs font-bold text-amber-600">Only {item.stock} left!</span>
                               )}
                             </div>

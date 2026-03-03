@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import { CreditCard, Lock, ShoppingBag, Loader2, CheckCircle, Package } from 'lucide-react';
+import {
+  MapPin, Plus, CreditCard, Lock, Loader2,
+  CheckCircle, Package, ShoppingBag,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/Customer/context/CartContext';
+import { useUser } from '@/Customer/context/UserContext';
+import AuthModal from '@/components/auth/AuthModal';
+import axiosClient from '@/axiosClient';
+import { toast } from 'sonner';
+import PaymentForm from '@/Customer/shop/PaymentForm';
 import {
   Dialog,
   DialogContent,
@@ -11,111 +20,88 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { useCart } from '@/Customer/context/CartContext';
 
-const API_URL = import.meta.env.VITE_API_URL;
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-// ---------- Static demo items (student can replace these) ----------
-const DEMO_ITEMS = [
-  { id: 1, name: 'Wireless Bluetooth Headphones', price: 899.99, quantity: 1, image: 'https://picsum.photos/seed/headphones/80/80' },
-  { id: 2, name: 'USB-C Fast Charger 65W', price: 349.50, quantity: 2, image: 'https://picsum.photos/seed/charger/80/80' },
-  { id: 3, name: 'Laptop Stand - Aluminium', price: 499.00, quantity: 1, image: 'https://picsum.photos/seed/stand/80/80' },
-];
-
-// ---------- Stripe PaymentForm (rendered inside Elements provider) ----------
-function StripePaymentForm({ amount, onSuccess }: { amount: number; onSuccess: () => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-    try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        toast.error(error.message || 'Payment failed');
-        setProcessing(false);
-        return;
-      }
-
-      if (paymentIntent?.status === 'succeeded') {
-        onSuccess();
-      }
-    } catch {
-      toast.error('Payment failed');
-      setProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement options={{ layout: 'tabs' }} />
-      <Button
-        type="submit"
-        disabled={!stripe || processing}
-        className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white text-lg disabled:opacity-50"
-      >
-        {processing ? (
-          <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
-        ) : (
-          `Pay R${amount.toFixed(2)}`
-        )}
-      </Button>
-    </form>
-  );
-}
-
-// ---------- Main Checkout Page ----------
 export default function CheckoutPage() {
-  const { items: cartItems, total: cartTotal, clearCart } = useCart();
+  const navigate = useNavigate();
+  const { clearCart } = useCart();
+  const { user } = useUser();
+
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Use real cart if available, otherwise show demo items
-  const hasRealCart = cartItems && cartItems.length > 0;
-  const displayItems = hasRealCart
-    ? cartItems.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image || `https://picsum.photos/seed/${item.id}/80/80`,
-      }))
-    : DEMO_ITEMS;
+  const isLoggedIn = !!user;
 
-  const subtotal = displayItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+  const cartItems: any[] = JSON.parse(localStorage.getItem('cart') || '[]');
+  const subtotal = cartItems.reduce(
+    (sum: number, item: any) => sum + Number(item.price) * item.quantity,
+    0,
+  );
   const orderTotal = subtotal;
 
-  // Call backend to create a real Stripe PaymentIntent
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      return;
+    }
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.length === 0) {
+      toast.error('Your cart is empty');
+      navigate('/cart');
+      return;
+    }
+    const fetchAddresses = async () => {
+      try {
+        setLoadingAddresses(true);
+        const { data } = await axiosClient.get('/addresses');
+        setAddresses(data.addresses || []);
+        const def = data.addresses?.find((a: any) => a.isDefault);
+        if (def) setSelectedAddressId(def.id);
+      } catch {
+        toast.error('Failed to load addresses');
+      } finally {
+        setLoadingAddresses(false);
+      }
+    };
+    fetchAddresses();
+  }, [isLoggedIn]);
+
   const handlePayNow = async () => {
     if (!stripePromise) {
       toast.error('Stripe is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to .env');
       return;
     }
+    if (!selectedAddressId) return toast.error('Please select a delivery address');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.length === 0) return toast.error('Your cart is empty');
 
     setLoading(true);
     setError(null);
 
     try {
-      const { data } = await axios.post(`${API_URL}/payments/checkout`, {
-        amount: orderTotal,
+      // 1. Create the order
+      const { data } = await axiosClient.post('/orders', {
+        shippingAddressId: selectedAddressId,
+        paymentMethod: 'card',
       });
+      const newOrderId = data.order?.id ?? data.id;
+      if (!newOrderId) throw new Error('Order ID missing from response');
+      setOrderId(newOrderId);
 
-      setClientSecret(data.clientSecret);
+      const paymentData = await axiosClient.post('/payments/create-intent', {
+        orderId: newOrderId,
+      });
+      setClientSecret(paymentData.data.clientSecret);
       setModalOpen(true);
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Failed to initialize payment';
@@ -126,14 +112,35 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (paidOrderId: number) => {
     setPaymentSuccess(true);
     setModalOpen(false);
-    if (hasRealCart) clearCart();
+    clearCart();
     toast.success('Payment successful!');
+    navigate(`/orders/${paidOrderId}`);
   };
 
-  // ---------- Success screen ----------
+  // ── Auth gate ──────────────────────────────────────────────────────────────
+  if (!isLoggedIn) {
+    return (
+      <>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Lock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
+            <p className="text-gray-600">Please login to continue</p>
+          </div>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => navigate('/cart')}
+          redirectTo="/checkout"
+        />
+      </>
+    );
+  }
+
+  // ── Success screen ─────────────────────────────────────────────────────────
   if (paymentSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -156,40 +163,117 @@ export default function CheckoutPage() {
     );
   }
 
-  // ---------- Checkout page ----------
+  // ── Main checkout UI ───────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Order Items */}
-          <div className="lg:col-span-3">
+
+          {/* Left col: Address + Order Items */}
+          <div className="lg:col-span-3 space-y-6">
+
+            {/* Delivery Address */}
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Delivery Address
+                </h2>
+                <Button size="sm" onClick={() => navigate('/account/addresses')}>
+                  <Plus className="w-4 h-4 mr-1" /> Add New
+                </Button>
+              </div>
+
+              {loadingAddresses ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                </div>
+              ) : addresses.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">No addresses found. Add one to continue.</p>
+                  <Button onClick={() => navigate('/account/addresses')} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" /> Add Delivery Address
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <label
+                      key={address.id}
+                      className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        selectedAddressId === address.id
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        value={address.id}
+                        checked={selectedAddressId === address.id}
+                        onChange={() => setSelectedAddressId(address.id)}
+                        className="sr-only"
+                      />
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold text-gray-900 flex items-center gap-2">
+                            {address.label || 'Address'}
+                            {address.isDefault && (
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-700 mt-1">{address.recipientName}</p>
+                          <p className="text-gray-500 text-sm mt-1">
+                            {address.streetAddress}
+                            {address.addressLine2 ? `, ${address.addressLine2}` : ''}
+                          </p>
+                          <p className="text-gray-500 text-sm">
+                            {address.suburb ? `${address.suburb}, ` : ''}
+                            {address.city}, {address.province} {address.postalCode}
+                          </p>
+                          <p className="text-gray-500 text-sm">📞 {address.phone}</p>
+                        </div>
+                        {selectedAddressId === address.id && (
+                          <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-1" />
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Order Items */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
                 <ShoppingBag className="w-5 h-5" />
                 Order Items
-                {!hasRealCart && (
-                  <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">
-                    Demo
-                  </span>
-                )}
               </h2>
-
               <div className="divide-y">
-                {displayItems.map((item: any) => (
+                {cartItems.map((item: any) => (
                   <div key={item.id} className="flex items-center gap-4 py-4">
                     <img
-                      src={item.image}
+                      src={
+                        item.image
+                          ? `${import.meta.env.VITE_STATIC_FILE_URL}${item.image}`
+                          : `https://picsum.photos/seed/${item.id}/80/80`
+                      }
                       alt={item.name}
                       className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${item.id}/80/80`;
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{item.name}</p>
                       <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                     </div>
                     <p className="font-semibold text-gray-900 whitespace-nowrap">
-                      R{(item.price * item.quantity).toFixed(2)}
+                      R{(Number(item.price) * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -197,14 +281,14 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Summary + Pay Button */}
+          {/* Right col: Summary + Pay Button */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
 
               <div className="space-y-3 mb-4 pb-4 border-b">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal ({displayItems.length} items)</span>
+                  <span>Subtotal ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
                   <span>R{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
@@ -224,7 +308,7 @@ export default function CheckoutPage() {
 
               <Button
                 onClick={handlePayNow}
-                disabled={loading}
+                disabled={loading || !selectedAddressId || addresses.length === 0}
                 className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
               >
                 {loading ? (
@@ -243,7 +327,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ---------- Stripe Payment Modal ---------- */}
+      {/* Stripe Payment Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
@@ -256,9 +340,15 @@ export default function CheckoutPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {stripePromise && clientSecret ? (
+          {stripePromise && clientSecret && orderId ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <StripePaymentForm amount={orderTotal} onSuccess={handlePaymentSuccess} />
+              <PaymentForm
+                clientSecret={clientSecret}
+                orderId={orderId}
+                amount={orderTotal}
+                selectedAddressId={selectedAddressId}
+                onSuccess={handlePaymentSuccess}
+              />
             </Elements>
           ) : (
             <p className="text-gray-500 text-sm">Loading payment form...</p>

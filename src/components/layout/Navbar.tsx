@@ -6,8 +6,7 @@ import { useUser } from "@/Customer/context/UserContext";
 export default function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 const { user } = useUser();
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-[#0B1224] border-b border-white/5 z-[100] flex items-center px-4 justify-between">
-      <div className="flex items-center gap-4 flex-shrink-0">
+<nav className="fixed top-0 left-0 right-0 h-16 bg-[#0B1224] border-b border-white/5 z-[200] flex items-center px-4 justify-between">      <div className="flex items-center gap-4 flex-shrink-0">
         <Button 
           variant="ghost" 
           size="icon" 

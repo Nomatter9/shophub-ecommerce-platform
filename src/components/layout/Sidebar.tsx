@@ -65,6 +65,12 @@ export default function Sidebar({ isOpen }: SidebarProps) {
                 Profile
               </span>
             </NavLink>
+                    <NavLink to="/shop" className={linkClass}>
+              <Package className="w-6 h-6 flex-shrink-0" />
+              <span className={`font-medium transition-opacity duration-300 ${!isOpen && "opacity-0 group-hover:opacity-100"}`}>
+                View Shop
+              </span>
+            </NavLink>
 
             <div className="relative">
               <button 

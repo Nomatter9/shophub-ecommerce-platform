@@ -10,6 +10,7 @@ import { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useUser } from "@/Customer/context/UserContext";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,8 +20,8 @@ export default function ProfilePage() {
   const [openEdit, setOpenEdit] = useState(false);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-const { user, setUser,loading: isAuthLoading } = useUser();
+  const navigate = useNavigate()
+  const { user, setUser,loading: isAuthLoading } = useUser();
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -93,6 +94,7 @@ const { user, setUser,loading: isAuthLoading } = useUser();
       setSelectedFile(null);
       toast.success("Profile updated successfully!");
       setOpenEdit(false);
+      navigate("/shop")
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Update failed");
     } finally {

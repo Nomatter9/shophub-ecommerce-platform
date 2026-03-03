@@ -26,7 +26,7 @@ export default function DepartmentMenu() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const [authKey, setAuthKey] = useState(0);
-const { user } = useUser();   
+const { user, loading } = useUser();
 const isLoggedIn = !!user;
   useEffect(() => {
     const handleAuthChange = () => setAuthKey(prev => prev + 1);
@@ -106,7 +106,7 @@ const isLoggedIn = !!user;
   };
 
   return (
-    <header className="w-full bg-[#0B1224] text-white sticky top-0 z-50" key={authKey}>
+    <header className="w-full bg-[#0B1224] text-white sticky top-0 z-50" >
       <div className="bg-[#080E1C] border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-4 h-10 flex items-center justify-between text-[13px]">
           <div className="flex items-center gap-6">
@@ -118,38 +118,49 @@ const isLoggedIn = !!user;
               Sell on TakealotClone
             </Link>
           </div>
-<div className="flex items-center gap-2">
-  {isLoggedIn ? (
-    <div className="flex items-center gap-4">
-      <Link 
-        to="/orders" 
-        className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
-      >
-        My Orders
+        <div className="flex items-center gap-2">
+      {loading ? (
+        <div className="w-24 h-4 bg-slate-800 rounded animate-pulse" />
+      ) : isLoggedIn ? (
+        <div className="flex items-center gap-3">
+          {user?.role === 'customer' && (
+            <>
+        {/* <Link to="/orders" className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all text-[13px]">
+          My Orders
+        </Link> */}
+        <Link to="/account" className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all text-[13px]">
+          My Account
+        </Link>
+      </>
+    )}
+    {user?.role === 'admin' && (
+      <Link to="/dashboard" className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all text-[13px]">
+        Dashboard
       </Link>
+    )}
+    <Link to="/profile" className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-slate-800 transition-all">
+      <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
+        {user?.profilePicture ? (
+          <img
+            src={user.profilePicture.startsWith('data:') ? user.profilePicture : `${import.meta.env.VITE_STATIC_FILE_URL}${user.profilePicture}`}
+            className="w-full h-full object-cover"
+            alt="Profile"
+          />
+        ) : (
+          <span>{user?.firstName?.charAt(0)?.toUpperCase()}{user?.lastName?.charAt(0)?.toUpperCase()}</span>
+        )}
+      </div>
+      <span className="text-slate-300 hover:text-white text-[13px] font-medium">{user?.firstName}</span>
+    </Link>
+  </div>
+) : (
+  <div className="flex items-center">
+    <Link to="/login" className="px-4 py-1 text-slate-300 hover:text-white transition-all">Login</Link>
+    <Link to="/register" className="px-4 py-1 text-slate-300 hover:text-white transition-all">Register</Link>
+  </div>
+)}
 
-      <Link 
-        to="/account" 
-        className="text-slate-300 hover:text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
-      >
-        My Account
-      </Link>
-
-      <Link 
-        to="/profile" 
-        className="text-slate-300 hover:text-white font-bold px-3 py-1 rounded-md hover:bg-slate-800 transition-all"
-      >
-        Profile
-      </Link>
-    </div>
-  ) : (
-    <div className="flex items-center">
-      <Link to="/login" className="px-4 py-1">Login</Link>
-      <Link to="/register" className="px-4 py-1">Register</Link>
-    </div>
-  )}
-</div>
-        </div>
+      </div>
       </div>
       <div className="border-b border-slate-800/30">
         <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between gap-10">
@@ -326,6 +337,8 @@ const isLoggedIn = !!user;
           </div>
         </div>
       </div>
+          </div>
+
     </header>
   );
 }

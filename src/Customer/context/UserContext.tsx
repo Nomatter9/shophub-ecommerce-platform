@@ -7,11 +7,12 @@ interface User {
   email: string;
   phone?: string;
   profilePicture?: string;
+    role: 'customer' | 'admin' | 'seller'; 
 }
 
 interface UserContextType {
   user: User | null;
-  setUser: (user: User) => void;
+  setUser: (user: User | null) => void;
   loading: boolean; 
 }
 

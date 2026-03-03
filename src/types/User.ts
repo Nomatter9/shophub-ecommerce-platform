@@ -10,11 +10,11 @@ export interface User {
   lastName: string;
   email: string;
   phone: string;
-  profilePicture?: string | null;  // ← Add this
+  profilePicture?: string | null;  
   role: 'customer' | 'admin' | 'seller';
-  isVerified: boolean;
+    isVerified: boolean;
   createdAt: string;
-  updatedAt?: string;  // ← Add this (optional)
+  updatedAt?: string;  
   stats?: {
     totalOrders: number;
     totalSpent: string;

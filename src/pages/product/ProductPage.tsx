@@ -156,11 +156,6 @@ const handleSave = async (data: FormData | any) => {
     toast.error("Delete failed");
       }
       };
-
-   if (isLoading)
-   return <div className="p-10 text-slate-400">Loading products…</div>;
-   if (isError)
-   return <div className="p-10 text-red-400">Failed to load products</div>;
 return(
 <div className="flex flex-col h-full overflow-hidden bg-[#0B1224] text-slate-300">
   <div className="flex-none p-4 space-y-4 border-b border-white/10">

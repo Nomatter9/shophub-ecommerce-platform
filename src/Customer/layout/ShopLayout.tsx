@@ -1,5 +1,4 @@
 import { Outlet } from 'react-router-dom';
-import ShopNavbar from './ShopNavbar';
 import DepartmentMenu from './ShopNavbar';
 
 export default function ShopLayout() {
