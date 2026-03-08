@@ -47,12 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 }
 }
-  //  axiosClient.get('/cart')
-  //     .then(res => setItems(normalizeItems(res.data.cart.items)))
-  //     .catch(() => toast.error('Failed to load cart'))
-  //     .finally(() => setLoading(false));
-
-  const normalizeItems = (raw: any[]): CartItem[] =>
+ const normalizeItems = (raw: any[]): CartItem[] =>
     raw.map(i => ({
       id: i.id,                             
       productId: i.productId,
