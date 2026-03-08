@@ -76,3 +76,48 @@
     @apply w-full max-w-md mx-auto p-8 rounded-2xl border border-white/[0.08] bg-[#0B1632]/80 backdrop-blur-xl shadow-2xl;
   }
 }
+/* globals.css */
+
+/* ── Animations ─────────────────────────────── */
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg);       opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes popIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.1);             }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(34,197,94,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(34,197,94,0.6); }
+}
+
+@keyframes floatBg {
+  0%, 100% { transform: translate(-50%,-50%) scale(1);   }
+  50%       { transform: translate(-50%,-50%) scale(1.1); }
+}
+
+/* ── Reusable utility classes ───────────────── */
+.dark-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.animate-fade-slide-up       { animation: fadeSlideUp 0.5s ease forwards; }
+.animate-fade-slide-up-d1    { animation: fadeSlideUp 0.5s ease 0.1s both; }
+.animate-fade-slide-up-d2    { animation: fadeSlideUp 0.5s ease 0.2s both; }
+.animate-fade-slide-up-d3    { animation: fadeSlideUp 0.5s ease 0.3s both; }
+.animate-fade-slide-up-d4    { animation: fadeSlideUp 0.5s ease 0.4s both; }
+.animate-pop-in              { animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
+.animate-glow-pulse          { animation: glowPulse 2s ease-in-out infinite; }
+.animate-float-bg            { animation: floatBg 6s ease-in-out infinite; }

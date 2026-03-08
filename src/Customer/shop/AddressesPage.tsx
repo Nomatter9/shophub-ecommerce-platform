@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import axiosClient from '@/axiosClient';
 import { toast } from 'sonner';
 import { addressSchema, AddressFormData } from "@/schemas/addressesSchema";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 
 
@@ -19,9 +19,14 @@ interface Address extends AddressFormData {
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const location = useLocation();
+const locationState = location.state as { openForm?: boolean } | null;
+
+const [showForm, setShowForm] = useState(
+  locationState?.openForm === true
+);
 const navigate = useNavigate();
   const {
     register,
@@ -172,15 +177,6 @@ return (
           </p>
         </div>
 
-        {!showForm && (
-          <Button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Add Address
-          </Button>
-        )}
       </div>
       {showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6 shadow-lg">

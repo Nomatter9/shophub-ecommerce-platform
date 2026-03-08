@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
+import axiosClient from '@/axiosClient';
 
 interface CartItem {
-  id: number;
+  id: number;       
   productId: number;
   name: string;
   price: number;
@@ -13,10 +14,12 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: any, quantity?: number) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
-  clearCart: () => void;
+  loading: boolean;
+  addToCart: (product: any, quantity?: number) => Promise<void>;
+  removeFromCart: (id: number) => Promise<void>;
+  updateQuantity: (id: number, quantity: number) => Promise<void>;
+  fetchCartItems: ()=> Promise<void>
+  clearCart: () => Promise<void>;
   total: number;
   itemCount: number;
 }
@@ -24,73 +27,89 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+   fetchCartItems()
+  }, []);
 
-  const addToCart = (product: any, quantity: number = 1) => {
-    setItems(prev => {
-      const existing = prev.find(i => i.productId === product.id);
-      const stock = product.stockQuantity ?? product.stock ?? 0;
+  const fetchCartItems = async ()=>{
+  setLoading(true)
+  try {
+  const res = await axiosClient.get("/cart");
+ setItems(normalizeItems(res.data.cart.items)) 
 
-      if (existing && existing.quantity + quantity > stock) {
-        toast.error(`Cannot add more than stock (${stock})`);
-        return prev;
-      }
+} catch (error) {
+  toast.error("Failed to load cart")
+}finally{
+  setLoading(false)
 
-      if (existing) {
-        toast.success(`Updated ${product.name} quantity`);
-        return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i);
-      }
+}
+}
+  //  axiosClient.get('/cart')
+  //     .then(res => setItems(normalizeItems(res.data.cart.items)))
+  //     .catch(() => toast.error('Failed to load cart'))
+  //     .finally(() => setLoading(false));
 
-      toast.success(`${product.name} added to cart`);
-      return [...prev, {
-        id: Date.now(),
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        image: product.images?.[0]?.url || '',
-        stock
-      }];
-    });
-  };
-
-  const removeFromCart = (productId: number) => {
-    setItems(prev => prev.filter(i => i.productId !== productId));
-    toast.success('Removed from cart');
-  };
-
-  const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) return removeFromCart(productId);
-    setItems(prev => prev.map(i => {
-      if (i.productId === productId) {
-        if (quantity > i.stock) {
-          toast.error(`Only ${i.stock} items available`);
-          return i;
-        }
-        return { ...i, quantity };
-      }
-      return i;
+  const normalizeItems = (raw: any[]): CartItem[] =>
+    raw.map(i => ({
+      id: i.id,                             
+      productId: i.productId,
+      name: i.product?.name ?? i.name,        
+      price: Number(i.product?.price ?? i.priceAtAdd ?? i.price),
+      quantity: i.quantity,
+      image: i.product?.images?.[0]?.url ?? '',
+      stock: i.product?.stockQuantity ?? 0,
     }));
+
+  const addToCart = async (product: any, quantity = 1) => {
+    try {
+      await axiosClient.post('/cart/items', { productId: product.id, quantity });
+       await fetchCartItems()
+      toast.success(`${product.name} added to cart`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'Failed to add to cart');
+    }
   };
 
-  const clearCart = () => {
-    setItems([]);
-    toast.success('Cart cleared');
+  const removeFromCart = async (id: number) => {
+    try {
+      await axiosClient.delete(`/items/${id}`);
+      setItems(prev => prev.filter(i => i.id !== id));
+      toast.success('Removed from cart');
+    } catch {
+      toast.error('Failed to remove item');
+    }
+  };
+
+  const updateQuantity = async (id: number, quantity: number) => {
+    if (quantity <= 0) return removeFromCart(id);
+    try {
+      await axiosClient.put(`/items/${id}`, { quantity });
+      setItems(prev =>
+        prev.map(i => i.id === id ? { ...i, quantity } : i)
+      );
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'Failed to update quantity');
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      await axiosClient.delete('/cart/items');
+      setItems([]);
+      toast.success('Cart cleared');
+    } catch {
+      toast.error('Failed to clear cart');
+    }
   };
 
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount }}>
+    <CartContext.Provider value={{ items, loading, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount,fetchCartItems}}>
       {children}
     </CartContext.Provider>
   );

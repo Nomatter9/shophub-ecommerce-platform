@@ -26,6 +26,8 @@ import { UserProvider } from "@/Customer/context/UserContext";
 import AddressesPage from "./Customer/shop/AddressesPage";
 import AccountPage from "./Customer/shop/AccountPage";
 import OrdersPage from "./Customer/shop/OrdersPage";
+import PaymentSuccessPage from "./Customer/shop/PaymentSuccessPage";
+import OrderDetailPage from "./Customer/shop/OrderDetailPage";
 
 const ProtectedRoute = ({ children, allowedRoles }: { 
   children: React.ReactNode; 
@@ -88,12 +90,12 @@ export default function App() {
               <ProtectedRoute allowedRoles={['customer']}><AccountPage /> </ProtectedRoute> } />
             
             <Route path="/orders" element={<ProtectedRoute allowedRoles={['customer']}> <OrdersPage /> </ProtectedRoute> } />
-            <Route  path="/account/addresses" element={ <ProtectedRoute allowedRoles={['customer']}> <AddressesPage />
-              </ProtectedRoute> } />
+            <Route path="/orders/:id" element={<ProtectedRoute allowedRoles={['customer']}> <OrderDetailPage /> </ProtectedRoute> } />
+            <Route path="/payment/success/:orderId" element={<ProtectedRoute allowedRoles={['customer']}> <PaymentSuccessPage /> </ProtectedRoute> } />
+            <Route  path="/account/addresses" element={ <ProtectedRoute allowedRoles={['customer']}> <AddressesPage /></ProtectedRoute> } />
             <Route path="/wishlist" element={<WishlistPage />} />
                <Route path="/profile" element={
-              <ProtectedRoute allowedRoles={['customer','admin', 'seller']}> <ProfilePage /> </ProtectedRoute> } />
-            </Route>
+              <ProtectedRoute allowedRoles={['customer','admin', 'seller']}> <ProfilePage /> </ProtectedRoute> } /> </Route>
 
           {/* DASHBOARD LAYOUT */}
           <Route 

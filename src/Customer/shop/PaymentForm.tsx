@@ -10,12 +10,10 @@ interface PaymentFormProps {
   orderId: number;
   amount: number;
   selectedAddressId: number | null;
-  onSuccess: (orderId: number) => void;
-}
+onSuccess: (paymentIntent: any) => void; }
 
 export default function PaymentForm({
   clientSecret,
-  orderId,
   amount,
   selectedAddressId,
   onSuccess,
@@ -23,43 +21,41 @@ export default function PaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("")
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+const handleSubmit = async (event: React.FormEvent) => {
+  event.preventDefault();
 
   if (!stripe || !elements) return;
 
-  if (!selectedAddressId) {
-    toast.error("Please select a delivery address");
+  setProcessing(true);
+  setErrorMessage(""); 
+
+  const { error: submitError } = await elements.submit(); 
+  if (submitError) {
+    setErrorMessage(submitError.message || "Validation failed");
+    setProcessing(false);
     return;
   }
 
-  setProcessing(true);
+  const result = await stripe.confirmPayment({
+    elements,
+    clientSecret,
+    confirmParams: {
+      return_url: `${window.location.origin}/checkout/success`,
+    },
+    redirect: 'if_required', 
+  });
 
-  try {
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      clientSecret,
-      redirect: "if_required",
-    });
+  console.log("Full Stripe Response:", result);
 
-    if (error) {
-      toast.error(error.message || "Payment failed");
-      setProcessing(false);
-      return;
-    }
-
-    if (paymentIntent?.status === "succeeded") {
-      await axiosClient.post("/payments/confirm", {
-        paymentIntentId: paymentIntent.id,
-        orderId,
-      });
-
-      onSuccess(orderId);
-    }
-  } catch (err: any) {
-    toast.error(err.response?.data?.message || "Payment failed");
+  if (result.error) {
+    setErrorMessage(result.error.message || "An unexpected error occurred.");
     setProcessing(false);
+  } else {
+    if (result.paymentIntent.status === 'succeeded') {
+      onSuccess(result.paymentIntent); 
+    }
   }
 };
 

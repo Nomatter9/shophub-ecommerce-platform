@@ -33,7 +33,7 @@ export default function HomePage() {
 
   if (isLoading) return <div className="h-[450px] bg-gray-100 animate-pulse" />;
 return (
-  <div className="bg-[#f4f4f4] min-h-screen">
+  <div className="bg-slate  min-h-screen">
     <section 
       className="relative w-full overflow-hidden py-4 md:py-6" 
       onMouseEnter={() => setIsPaused(true)}

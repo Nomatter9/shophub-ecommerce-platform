@@ -11,6 +11,7 @@ export function ProductCard({ product }: { product: any }) {
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistItemId, setWishlistItemId] = useState<number | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const isLoggedIn = !!localStorage.getItem('token');
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export function ProductCard({ product }: { product: any }) {
       setInWishlist(data.inWishlist);
       setWishlistItemId(data.wishlistItemId);
     } catch (error) {
-      toast.error("Failed to add to wish list")
+      toast.error("Failed to add to wish list");
     }
   };
 
@@ -34,7 +35,7 @@ export function ProductCard({ product }: { product: any }) {
   const getImageUrl = (url: string | undefined) => {
     if (!url) return `https://picsum.photos/seed/${product.id}/300`;
     if (url.startsWith('http')) return url;
-    //@ts-ignore
+    // @ts-ignore
     const baseUrl = import.meta.env.VITE_STATIC_FILE_URL?.replace(/\/$/, '') || '';
     return `${baseUrl}/${url.replace(/^\//, '')}`;
   };
@@ -48,7 +49,7 @@ export function ProductCard({ product }: { product: any }) {
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isLoggedIn) {
       toast.error('Please login to add to wishlist');
       return;
@@ -74,6 +75,22 @@ export function ProductCard({ product }: { product: any }) {
     }
   };
 
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!isLoggedIn) {
+      toast.error('Please login to add to cart');
+      return;
+    }
+
+    setCartLoading(true);
+    try {
+      await addToCart(product, 1);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg border hover:shadow-lg transition-all group overflow-hidden relative">
       <button
@@ -84,12 +101,13 @@ export function ProductCard({ product }: { product: any }) {
       >
         <Heart
           className={`w-5 h-5 transition-all ${
-            inWishlist 
-              ? 'fill-red-500 text-red-500' 
+            inWishlist
+              ? 'fill-red-500 text-red-500'
               : 'text-gray-400 hover:text-red-500'
           } ${wishlistLoading ? 'animate-pulse' : ''}`}
         />
       </button>
+
       <Link to={`/products/${product.id}`} className="block relative">
         <div className="aspect-square overflow-hidden bg-gray-100 relative">
           <img
@@ -101,7 +119,7 @@ export function ProductCard({ product }: { product: any }) {
             }}
           />
         </div>
-                {discount > 0 && (
+        {discount > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-bold shadow-sm">
             -{discount}%
           </div>
@@ -112,6 +130,7 @@ export function ProductCard({ product }: { product: any }) {
           </div>
         )}
       </Link>
+
       <div className="p-4">
         <Link to={`/products/${product.id}`} className="block group-hover:text-blue-600">
           <h3 className="font-semibold text-gray-900 line-clamp-2 min-h-[48px]">{product.name}</h3>
@@ -138,15 +157,12 @@ export function ProductCard({ product }: { product: any }) {
         </div>
 
         <Button
-          onClick={(e) => {
-            e.preventDefault();
-            addToCart(product, 1);
-          }}
-          disabled={product.stockQuantity === 0}
+          onClick={handleAddToCart}
+          disabled={product.stockQuantity === 0 || cartLoading}
           className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          Add to Cart
+          <ShoppingCart className={`w-4 h-4 mr-2 ${cartLoading ? 'animate-spin' : ''}`} />
+          {cartLoading ? 'Adding...' : 'Add to Cart'}
         </Button>
       </div>
     </div>

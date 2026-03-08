@@ -15,13 +15,20 @@ interface Order {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  pending:    { label: 'Pending',    color: 'text-amber-400',  bg: 'bg-amber-400/10',  icon: Clock },
-  confirmed:  { label: 'Confirmed',  color: 'text-blue-400',   bg: 'bg-blue-400/10',   icon: CheckCircle },
-  processing: { label: 'Processing', color: 'text-violet-400', bg: 'bg-violet-400/10', icon: RefreshCw },
-  shipped:    { label: 'Shipped',    color: 'text-sky-400',    bg: 'bg-sky-400/10',    icon: Package },
-  delivered:  { label: 'Delivered',  color: 'text-emerald-400',bg: 'bg-emerald-400/10',icon: CheckCircle },
-  cancelled:  { label: 'Cancelled',  color: 'text-red-400',    bg: 'bg-red-400/10',    icon: XCircle },
-  refunded:   { label: 'Refunded',   color: 'text-slate-400',  bg: 'bg-slate-400/10',  icon: RefreshCw },
+  pending:    { label: 'Pending',    color: 'text-amber-400',   bg: 'bg-amber-400/10',   icon: Clock        },
+  confirmed:  { label: 'Confirmed',  color: 'text-blue-400',    bg: 'bg-blue-400/10',    icon: CheckCircle  },
+  processing: { label: 'Processing', color: 'text-violet-400',  bg: 'bg-violet-400/10',  icon: RefreshCw    },
+  shipped:    { label: 'Shipped',    color: 'text-sky-400',     bg: 'bg-sky-400/10',     icon: Package      },
+  delivered:  { label: 'Delivered',  color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle  },
+  cancelled:  { label: 'Cancelled',  color: 'text-red-400',     bg: 'bg-red-400/10',     icon: XCircle      },
+  refunded:   { label: 'Refunded',   color: 'text-slate-400',   bg: 'bg-slate-400/10',   icon: RefreshCw    },
+};
+
+const paymentConfig: Record<string, { label: string; color: string }> = {
+  pending:  { label: 'Pending',  color: 'text-amber-400'   },
+  paid:     { label: 'Paid',     color: 'text-emerald-400' },
+  failed:   { label: 'Failed',   color: 'text-red-400'     },
+  refunded: { label: 'Refunded', color: 'text-slate-400'   },
 };
 
 export default function OrdersPage() {
@@ -61,64 +68,65 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold">My Orders</h1>
         </div>
 
-        {orders.length === 0 ? (
-          <div className="text-center py-24 bg-slate-900 border border-slate-800 rounded-2xl">
-            <ShoppingBag className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-300 mb-2">No orders yet</h2>
-            <p className="text-slate-500 mb-6">Once you place an order, it will appear here.</p>
-            <button
-              onClick={() => navigate('/shop')}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold transition-colors"
-            >
-              Start Shopping
-            </button>
-          </div>
-        ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              const status = statusConfig[order.status] || statusConfig.pending;
+              const status  = statusConfig[order.status]  ?? statusConfig.pending;
+              const payment = paymentConfig[order.paymentStatus] ?? paymentConfig.pending;
               const StatusIcon = status.icon;
 
               return (
                 <div
                   key={order.id}
                   onClick={() => navigate(`/orders/${order.id}`)}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-2xl p-5 cursor-pointer transition-all group"
+                  className="dark-card p-5 cursor-pointer hover:border-slate-600 transition-all group"
+                  style={{ borderColor: "rgba(255,255,255,0.08)" }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center shrink-0">
-                        <Package className="w-6 h-6 text-slate-400" />
+                  <div className="flex items-center justify-between gap-4">
+
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
+                        <Package className="w-5 h-5 text-slate-400" />
                       </div>
-                      <div>
-                        <p className="font-bold text-white">Order #{order.orderNumber}</p>
-                        <p className="text-slate-400 text-sm mt-0.5">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-white truncate">{order.orderNumber}</p>
+                        <p className="text-sm text-slate-500 mt-0.5">
                           {new Date(order.createdAt).toLocaleDateString('en-ZA', {
-                            day: 'numeric', month: 'long', year: 'numeric'
+                            day: 'numeric', month: 'short', year: 'numeric'
                           })}
+                          {order.items && (
+                            <span className="ml-2 text-slate-600">
+                              · {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-slate-400 text-xs">Total</p>
-                        <p className="font-bold text-white">R{Number(order.total).toFixed(2)}</p>
-                      </div>
+                    <div className="flex items-center gap-4 shrink-0">
 
-                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${status.bg}`}>
+                      <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full ${status.bg}`}>
                         <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
                         <span className={`text-xs font-semibold ${status.color}`}>{status.label}</span>
                       </div>
+                      <span className={`hidden md:block text-xs font-medium ${payment.color}`}>
+                        {payment.label}
+                      </span>
+                      <span className="font-bold text-white text-sm whitespace-nowrap">
+                        R{Number(order.total).toFixed(2)}
+                      </span>
 
-                      <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
                     </div>
+                  </div>
+
+                  <div className={`sm:hidden mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full w-fit ${status.bg}`}>
+                    <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
+                    <span className={`text-xs font-semibold ${status.color}`}>{status.label}</span>
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
       </div>
     </div>
   );

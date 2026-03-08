@@ -25,18 +25,8 @@ export default function DepartmentMenu() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-  const [authKey, setAuthKey] = useState(0);
 const { user, loading } = useUser();
 const isLoggedIn = !!user;
-  useEffect(() => {
-    const handleAuthChange = () => setAuthKey(prev => prev + 1);
-    window.addEventListener('auth-change', handleAuthChange);
-    window.addEventListener('storage', handleAuthChange);
-    return () => {
-      window.removeEventListener('auth-change', handleAuthChange);
-      window.removeEventListener('storage', handleAuthChange);
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
