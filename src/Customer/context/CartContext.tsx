@@ -22,18 +22,29 @@ interface CartContextType {
   clearCart: () => Promise<void>;
   total: number;
   itemCount: number;
+  wishlistCount: number;
+  fetchWishlistCount: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
    fetchCartItems()
+   fetchWishlistCount();
   }, []);
 
+const fetchWishlistCount = async () => {
+    try {
+      const res = await axiosClient.get("/wishlist");
+  console.log('Count:', res.data.count);
+        setWishlistCount(res.data.count || 0);
+    } catch (e) { console.error(e); }
+  };
   const fetchCartItems = async ()=>{
   setLoading(true)
   try {
@@ -104,7 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, loading, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount,fetchCartItems}}>
+    <CartContext.Provider value={{wishlistCount, fetchWishlistCount, items, loading, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount,fetchCartItems}}>
       {children}
     </CartContext.Provider>
   );

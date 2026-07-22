@@ -36,7 +36,7 @@ interface WishlistItem {
 export default function WishlistPage() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
+  const { fetchWishlistCount } = useCart();
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -69,8 +69,9 @@ export default function WishlistPage() {
   const handleRemoveItem = async (itemId: number) => {
     try {
       await axiosClient.delete(`/wishlist/${itemId}`);
-      toast.success('Removed from wishlist');
       setWishlist(prev => prev.filter(item => item.id !== itemId));
+     await fetchWishlistCount();
+     toast.success('Removed from wishlist');
     } catch (error: any) {
       toast.error('Failed to remove item');
     }
@@ -83,6 +84,7 @@ export default function WishlistPage() {
       await axiosClient.delete('/wishlist');
       toast.success('Wishlist cleared');
       setWishlist([]);
+     await fetchWishlistCount()
     } catch (error: any) {
       toast.error('Failed to clear wishlist');
     }
@@ -139,6 +141,7 @@ export default function WishlistPage() {
       handleAddToCart(item);
             await axiosClient.delete(`/wishlist/${item.id}`);
       setWishlist(prev => prev.filter(i => i.id !== item.id));
+     await fetchWishlistCount()
       
       toast.success('Moved to cart!');
     } catch (error: any) {

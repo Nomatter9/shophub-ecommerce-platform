@@ -14,9 +14,7 @@ export default function DepartmentMenu() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: categories = [] } = useAllCategories(true);
-  const { itemCount } = useCart();
-  const searchRef = useRef<HTMLDivElement>(null);
-
+    const searchRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<any>(null);
@@ -27,7 +25,8 @@ export default function DepartmentMenu() {
 
 const { user, loading } = useUser();
 const isLoggedIn = !!user;
-
+const { wishlistCount,itemCount , fetchWishlistCount } = useCart();
+console.log('Header wishlistCount:', wishlistCount);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -244,8 +243,13 @@ const isLoggedIn = !!user;
           </div>
 
           <div className="flex items-center gap-8 shrink-0">
-            <Link to="/wishlist" className="text-slate-300 hover:text-blue-500 transition-all">
+            <Link to="/wishlist" className="relative text-slate-300 hover:text-blue-500 transition-all">
               <Heart className="w-7 h-7" />
+               {(wishlistCount ?? 0)> 0 && (
+                <span className="absolute -top-1 -right-2 bg-green-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-[#0B1224]">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
             <Link to="/cart" className="relative text-slate-300 hover:text-blue-500 transition-all">
               <ShoppingCart className="w-7 h-7" />

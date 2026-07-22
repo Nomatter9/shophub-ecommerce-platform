@@ -13,7 +13,7 @@ const queryClient = new QueryClient()
 document.documentElement.classList.add("dark");
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <CartProvider>
@@ -24,5 +24,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </CartProvider>
       </QueryClientProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  // {/* </React.StrictMode>, */}
 )
